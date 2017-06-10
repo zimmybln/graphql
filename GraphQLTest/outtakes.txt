@@ -1,0 +1,62 @@
+    public class ToUpperDirectiveFieldMiddleware
+    {
+        public async Task<object> Resolve(
+            ResolveFieldContext context,
+            FieldMiddlewareDelegate next)
+        {
+            // the next delegate calls into the "next" child middleware
+            var result = await next(context);
+            // check context.Field.Directives + context.Variables to determine if
+            // a directive is being applied
+            // see the GetArgumentValues method in DocumentExecutor
+
+            var uppercase = false;
+
+            if (!context.FieldName.Equals("customer"))
+                return result;
+
+            var listofcustomers = result as IEnumerable<Customer>;
+
+            if (listofcustomers == null)
+                return result;
+
+            foreach (var customer in listofcustomers)
+            {
+                customer.FirstName = customer.FirstName.ToUpper();
+            }
+
+            var metadata = new Dictionary<string, object>
+            {
+                {"typeName", context.ParentType.Name},
+                {"fieldName", context.FieldName}
+            };
+
+            using (context.Metrics.Subject("field", context.FieldName, metadata))
+            {
+                //return next(context);
+            }
+
+            return result;
+        }
+		
+		        [Test]
+        public async Task QueryWithMiddleware()
+        {
+            var schema = new Schema
+            {
+                Query = new CustomerQuery()
+            };
+
+            string query = @"
+                            query {
+                                customer {
+                                    id
+                                    firstName
+                                    lastName
+                                }                                
+                            }";
+
+            var result = await Query(query, schema, new DataSource(), middlewaretype:typeof(ToUpperDirectiveFieldMiddleware));
+
+            Console.WriteLine(result);
+        }
