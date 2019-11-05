@@ -8,8 +8,8 @@ using GraphQL;
 using GraphQL.Http;
 using GraphQL.Instrumentation;
 using GraphQL.Types;
-using Microsoft.Practices.Unity;
 using NUnit.Framework;
+using Unity;
 using Type = System.Type;
 
 namespace GraphQLTest.Tests
